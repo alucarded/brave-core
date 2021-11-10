@@ -9,19 +9,21 @@
 #include <memory>
 #include <string>
 
+#include "base/files/file_path.h"
 #include "components/keyed_service/core/keyed_service.h"
 #include "components/prefs/pref_change_registrar.h"
-
-class PrefService;
-class PrefRegistrySimple;
 
 namespace network {
 class SharedURLLoaderFactory;
 }  // namespace network
 
+class PrefService;
+class PrefRegistrySimple;
+
 namespace brave {
 
 class BraveOperationalPatterns;
+class BraveFederatedDataService;
 
 // In the absence of user data collection, Brave is unable to support learning
 // and decisioning systems for tasks such as private ad matching or private news
@@ -34,6 +36,7 @@ class BraveFederatedLearningService : public KeyedService {
   BraveFederatedLearningService(
       PrefService* prefs,
       PrefService* local_state,
+      base::FilePath brave_federated_learning_path,
       scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory);
   ~BraveFederatedLearningService() override;
 
@@ -56,7 +59,10 @@ class BraveFederatedLearningService : public KeyedService {
   PrefService* prefs_;
   PrefService* local_state_;
   PrefChangeRegistrar local_state_change_registrar_;
+  const base::FilePath brave_federated_learning_path_;
+
   std::unique_ptr<BraveOperationalPatterns> operational_patterns_;
+  std::unique_ptr<BraveFederatedDataService> data_service_;
   scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory_;
 };
 

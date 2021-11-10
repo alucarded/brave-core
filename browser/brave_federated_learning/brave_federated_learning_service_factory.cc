@@ -48,7 +48,7 @@ KeyedService* BraveFederatedLearningServiceFactory::BuildServiceInstanceFor(
   std::unique_ptr<BraveFederatedLearningService>
       brave_federated_learning_service(new BraveFederatedLearningService(
           user_prefs::UserPrefs::Get(context), g_browser_process->local_state(),
-          url_loader_factory));
+          context->GetPath(), url_loader_factory));
   return brave_federated_learning_service.release();
 }
 
