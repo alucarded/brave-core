@@ -365,4 +365,19 @@ bool ParseSwitchEthereumChainParams(const std::string& json,
   return true;
 }
 
+bool ParseRequestPermissionsParams(
+    const std::string& json,
+    std::vector<std::string>* restricted_methods) {
+  if (!restricted_methods)
+    return false;
+  restricted_methods->clear();
+  auto param_obj = GetObjectFromParamsList(json);
+  if (!param_obj)
+    return false;
+  for (auto prop : param_obj->DictItems()) {
+    restricted_methods->push_back(prop.first);
+  }
+  return true;
+}
+
 }  // namespace brave_wallet

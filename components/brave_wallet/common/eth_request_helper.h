@@ -48,6 +48,10 @@ bool ParseEthSignTypedDataParams(const std::string& json,
 bool ParseSwitchEthereumChainParams(const std::string& json,
                                     std::string* chain_id);
 
+bool ParseRequestPermissionsParams(
+    const std::string& json,
+    std::vector<std::string>* restricted_methods);
+
 }  // namespace brave_wallet
 
 #endif  // BRAVE_COMPONENTS_BRAVE_WALLET_COMMON_ETH_REQUEST_HELPER_H_
