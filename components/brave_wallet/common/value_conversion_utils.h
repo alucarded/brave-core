@@ -19,7 +19,7 @@ namespace brave_wallet {
 base::Value EthereumChainToValue(const mojom::EthereumChainPtr& chain);
 absl::optional<mojom::EthereumChain> ValueToEthereumChain(
     const base::Value& value);
-base::Value PermissionRequestResponseToValue(const url::Origin& origin, const std::vector<std::string> accounts);
+base::ListStorage PermissionRequestResponseToValue(const url::Origin& origin, const std::vector<std::string> accounts);
 
 }  // namespace brave_wallet
 

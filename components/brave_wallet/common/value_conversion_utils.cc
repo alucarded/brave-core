@@ -107,13 +107,13 @@ base::Value EthereumChainToValue(const mojom::EthereumChainPtr& chain) {
   return dict;
 }
 
-base::Value PermissionRequestResponseToValue(const url::Origin& origin, const std::vector<std::string> accounts) {
-  base::ListValue container_list;
+base::ListStorage PermissionRequestResponseToValue(const url::Origin& origin, const std::vector<std::string> accounts) {
+  base::ListStorage container_list;
   base::Value dict(base::Value::Type::DICTIONARY);
   dict.SetStringKey("id", base::GenerateGUID());
 
-  base::ListValue context_list;
-  context_list.Append("https://github.com/MetaMask/rpc-cap");
+  base::ListStorage context_list;
+  context_list.push_back("https://github.com/MetaMask/rpc-cap");
   dict.SetKey("context", std::move(context_list));
 
   base::ListValue caveats_list;
@@ -121,7 +121,7 @@ base::Value PermissionRequestResponseToValue(const url::Origin& origin, const st
   caveats_obj1.SetStringKey("name", "primaryAccountOnly");
   caveats_obj1.SetStringKey("type", "limitResponseLength");
   caveats_obj1.SetIntKey("value", 1);
-  caveats_list.Append(std::move(caveats_obj1));
+  caveats_list.push_back(std::move(caveats_obj1));
   base::Value caveats_obj2(base::Value::Type::DICTIONARY);
   caveats_obj2.SetStringKey("name", "exposedAccounts");
   caveats_obj2.SetStringKey("type", "filterResponse");
@@ -130,13 +130,13 @@ base::Value PermissionRequestResponseToValue(const url::Origin& origin, const st
     filter_response_list.Append(base::Value(account));
   }
   caveats_obj2.SetKey("value", std::move(filter_response_list));
-  caveats_list.Append(std::move(caveats_obj2));
+  caveats_list.push_back(std::move(caveats_obj2));
   dict.SetKey("caveats", std::move(caveats_list));
 
   dict.SetDoubleKey("date",  base::Time::Now().ToJsTime());
   dict.SetStringKey("invoker", origin.Serialize());
   dict.SetStringKey("parentCapability", "eth_accounts");
-  container_list.Append(std::move(dict));
+  container_list.push_back(std::move(dict));
   return container_list;
 }
 

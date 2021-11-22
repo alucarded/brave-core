@@ -6,10 +6,13 @@
 #include "brave/components/brave_wallet/common/value_conversion_utils.h"
 
 #include "base/json/json_reader.h"
+#include "base/json/json_writer.h"
 #include "base/values.h"
 #include "brave/components/brave_wallet/common/brave_wallet.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
+
+namespace brave_wallet {
 
 TEST(ValueConversionUtilsUnitTest, ValueToEthereumChainTest) {
   {
@@ -118,3 +121,62 @@ TEST(ValueConversionUtilsUnitTest, EthereumChainToValueTest) {
   auto result = brave_wallet::ValueToEthereumChain(value);
   ASSERT_TRUE(result->Equals(chain));
 }
+
+TEST(ValueConversionUtilsUnitTest, PermissionRequestResponseToValue) {
+  url::Origin origin = url::Origin::Create(GURL("https://brave.com"));
+  std::vector<std::string> accounts { "0xA99D71De40D67394eBe68e4D0265cA6C9D421029" };
+  base::Value value = PermissionRequestResponseToValue(origin, accounts);
+
+  base::ListValue* list_value;
+  ASSERT_TRUE(value.GetAsList(&list_value));
+  ASSERT_EQ(list_value->size(), 1);
+
+  //const auto &obj1 = value.GetList();
+
+  //std::string* id = obj1.FindStringKey("id");
+  //ASSERT_NE(id, nullptr);
+
+  // "[{\"caveats\":[{\"name\":\"primaryAccountOnly\",\"type\":\"limitResponseLength\",\"value\":1},{\"name\":\"exposedAccounts\",\"type\":\"filterResponse\",\"value\":[\"0xA99D71De40D67394eBe68e4D0265cA6C9D421029\"]}],\"context\":[\"https://github.com/MetaMask/rpc-cap\"],\"date\":1.637594791027276e+12,\"id\":\"2485c0da-2131-4801-9918-26e8de929a29\",\"invoker\":\"https://brave.com\",\"parentCapability\":\"eth_accounts\"}]"
+  //
+  //
+//  std::string json;
+//  base::JSONWriter::Write(value, &json);
+//  EXPECT_EQ(json, "hi");
+}
+
+/*
+base::Value PermissionRequestResponseToValue(const url::Origin& origin, const std::vector<std::string> accounts) {
+  base::ListValue container_list;
+  base::Value dict(base::Value::Type::DICTIONARY);
+  dict.SetStringKey("id", base::GenerateGUID());
+
+  base::ListValue context_list;
+  context_list.Append("https://github.com/MetaMask/rpc-cap");
+  dict.SetKey("context", std::move(context_list));
+
+  base::ListValue caveats_list;
+  base::Value caveats_obj1(base::Value::Type::DICTIONARY);
+  caveats_obj1.SetStringKey("name", "primaryAccountOnly");
+  caveats_obj1.SetStringKey("type", "limitResponseLength");
+  caveats_obj1.SetIntKey("value", 1);
+  caveats_list.Append(std::move(caveats_obj1));
+  base::Value caveats_obj2(base::Value::Type::DICTIONARY);
+  caveats_obj2.SetStringKey("name", "exposedAccounts");
+  caveats_obj2.SetStringKey("type", "filterResponse");
+  base::ListValue filter_response_list;
+  for (auto account: accounts) {
+    filter_response_list.Append(base::Value(account));
+  }
+  caveats_obj2.SetKey("value", std::move(filter_response_list));
+  caveats_list.Append(std::move(caveats_obj2));
+  dict.SetKey("caveats", std::move(caveats_list));
+
+  dict.SetDoubleKey("date",  base::Time::Now().ToJsTime());
+  dict.SetStringKey("invoker", origin.Serialize());
+  dict.SetStringKey("parentCapability", "eth_accounts");
+  container_list.Append(std::move(dict));
+  return container_list;
+}
+*/
+
+}  // namespace brave_wallet
