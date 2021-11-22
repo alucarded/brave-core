@@ -28,6 +28,7 @@
 #include "third_party/blink/public/web/web_local_frame.h"
 #include "third_party/blink/public/web/web_script_source.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "brave/components/brave_wallet/common/value_conversion_utils.h"//TODO move to provider
 
 namespace {
 
@@ -118,6 +119,45 @@ std::unique_ptr<base::Value> GetJsonRpcRequest(
 
 namespace brave_wallet {
 
+void BraveWalletJSHandler::OnRequestPermissionsAccountsRequested(
+    base::Value id,
+    v8::Global<v8::Context> global_context,
+    std::unique_ptr<v8::Global<v8::Function>> global_callback,
+    v8::Global<v8::Promise::Resolver> promise_resolver,
+    v8::Isolate* isolate,
+    bool force_json_response,
+    bool success,
+    const std::vector<std::string>& accounts) {
+  v8::HandleScope handle_scope(isolate);
+  v8::MicrotasksScope microtasks(isolate,
+                                 v8::MicrotasksScope::kDoNotRunMicrotasks);
+  first_allowed_account_.clear();
+  if (accounts.size() > 0)
+    first_allowed_account_ = accounts[0];
+  // Note that we'll update this from `AccountsChangedEvent` as well, but we
+  // need to update it earlier here before we give a response in case the JS
+  // page has a handler that checks window.ethereum.selectedAddress
+  UpdateAndBindJSProperties();
+  std::unique_ptr<base::Value> formed_response;
+  if (!success || accounts.empty()) {
+    brave_wallet::ProviderErrors code =
+        !success ? brave_wallet::ProviderErrors::kInternalError
+                 : brave_wallet::ProviderErrors::kUserRejectedRequest;
+    std::string message =
+        !success ? "Internal JSON-RPC error" : "User rejected the request.";
+
+    formed_response = GetProviderErrorDictionary(code, message);
+  } else {
+    formed_response = base::Value::ToUniquePtrValue(PermissionRequestResponseToValue(url::Origin(render_frame_->GetWebFrame()->GetSecurityOrigin()), accounts));
+  }
+
+  SendResponse(std::move(id), std::move(global_context),
+               std::move(global_callback), std::move(promise_resolver), isolate,
+               force_json_response, std::move(formed_response),
+               success && !accounts.empty());
+}
+
+
 void BraveWalletJSHandler::OnEthereumPermissionRequested(
     base::Value id,
     v8::Global<v8::Context> global_context,
@@ -203,6 +243,39 @@ void BraveWalletJSHandler::OnGetAllowedAccounts(
                std::move(global_callback), std::move(promise_resolver), isolate,
                force_json_response, std::move(formed_response),
                error == mojom::ProviderError::kSuccess);
+}
+
+void BraveWalletJSHandler::OnGetGetPermissionsAccountsRequested(base::Value id,
+                            v8::Global<v8::Context> global_context,
+                            std::unique_ptr<v8::Global<v8::Function>> global_callback,
+                            v8::Global<v8::Promise::Resolver> promise_resolver,
+                            v8::Isolate* isolate,
+                            bool force_json_response,
+                            bool success,
+                            const std::vector<std::string>& accounts) {
+  v8::HandleScope handle_scope(isolate);
+  v8::MicrotasksScope microtasks(isolate,
+                                 v8::MicrotasksScope::kDoNotRunMicrotasks);
+  first_allowed_account_.clear();
+  if (accounts.size() > 0)
+    first_allowed_account_ = accounts[0];
+  // Note that we'll update this from `AccountsChangedEvent` as well, but we
+  // need to update it earlier here before we give a response in case the JS
+  // page has a handler that checks window.ethereum.selectedAddress
+  UpdateAndBindJSProperties();
+  std::unique_ptr<base::Value> formed_response;
+  if (!success) {
+    brave_wallet::ProviderErrors code = brave_wallet::ProviderErrors::kInternalError;
+    std::string message = "Internal JSON-RPC error";
+    formed_response = GetProviderErrorDictionary(code, message);
+  } else {
+    formed_response = base::Value::ToUniquePtrValue(PermissionRequestResponseToValue(url::Origin(render_frame_->GetWebFrame()->GetSecurityOrigin()), accounts));
+  }
+
+  SendResponse(std::move(id), std::move(global_context),
+               std::move(global_callback), std::move(promise_resolver), isolate,
+               force_json_response, std::move(formed_response),
+               success);
 }
 
 void BraveWalletJSHandler::OnAddOrSwitchEthereumChain(
@@ -652,6 +725,23 @@ bool BraveWalletJSHandler::CommonRequestOrSendAsync(
                        std::move(global_context), std::move(global_callback),
                        std::move(promise_resolver), isolate,
                        force_json_response));
+  } else if (method == kRequestPermissionsMethod) {
+    std::vector<std::string> restricted_methods;
+    if (!ParseRequestPermissionsParams(normalized_json_request, &restricted_methods))
+      return false;
+    if (std::find(restricted_methods.begin(), restricted_methods.end(), "eth_accounts") == restricted_methods.end())
+      return false;
+    brave_wallet_provider_->RequestEthereumPermissions(base::BindOnce(
+        &BraveWalletJSHandler::OnRequestPermissionsAccountsRequested,
+        weak_ptr_factory_.GetWeakPtr(), std::move(id),
+        std::move(global_context), std::move(global_callback),
+        std::move(promise_resolver), isolate, force_json_response));
+  } else if (method == kGetPermissionsMethod) {
+    brave_wallet_provider_->GetAllowedAccounts(base::BindOnce(
+        &BraveWalletJSHandler::OnGetGetPermissionsAccountsRequested,
+        weak_ptr_factory_.GetWeakPtr(), std::move(id),
+        std::move(global_context), std::move(global_callback),
+        std::move(promise_resolver), isolate, force_json_response));
   } else {
     brave_wallet_provider_->Request(
         normalized_json_request, true,
