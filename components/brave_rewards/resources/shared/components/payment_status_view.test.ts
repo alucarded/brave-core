@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { getDaysUntilRewardsPayment } from './pending_rewards'
+import { getDaysUntilRewardsPayment } from './payment_status_view'
 
 function ms (timeString: string) {
   return new Date(timeString).getTime()
@@ -13,6 +13,8 @@ function mockNow (timeString: string) {
 }
 
 describe('pending_rewards', () => {
+  // TODO(zenparsing): Add tests for shouldShowRewardsPaymentCompleted
+
   describe('getDaysUntilRewardsPayment', () => {
     it('returns empty if month does not match', () => {
       mockNow('2021-01-20')

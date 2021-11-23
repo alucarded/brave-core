@@ -28,11 +28,9 @@ function actionLogger (name: string) {
   }
 }
 
-function getNextPaymentDate (soon: boolean) {
+function getNextPaymentDate (days: number) {
   const now = new Date()
-  return soon
-    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2)
-    : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + days)
 }
 
 export function Wallet () {
@@ -52,7 +50,7 @@ export function Wallet () {
   }
 
   const nextPaymentDate = getNextPaymentDate(
-    knobs.boolean('Show Pending Rewards', false))
+    knobs.number('Days Until Payment', 20))
 
   return (
     <LocaleContext.Provider value={locale}>

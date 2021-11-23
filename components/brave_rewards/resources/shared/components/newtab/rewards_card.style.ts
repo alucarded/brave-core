@@ -181,17 +181,45 @@ export const balanceExchangeNote = styled.div`
 `
 
 export const pendingRewards = styled.div`
-  margin-top: 8px;
-  background: var(--brave-palette-white);
-  box-shadow: 0px 0px 24px rgba(99, 105, 110, 0.36);
-  padding: 6px 12px;
-  border-radius: 6px;
   color: var(--brave-palette-neutral900);
   font-size: 13px;
   line-height: 18px;
 
-  strong, .amount {
+  a {
+    color: var(--brave-palette-blurple500);
     font-weight: 600;
+    text-decoration: none;
+  }
+
+  .rewards-payment-pending {
+    margin-top: 8px;
+    background: #E8F4FF;
+    box-shadow: 0px 0px 24px rgba(99, 105, 110, 0.36);
+    padding: 6px 12px;
+    border-radius: 6px;
+
+    .icon {
+      display: none;
+    }
+  }
+
+  .rewards-payment-amount {
+    font-weight: 600;
+
+    .plus {
+      margin-right: 2px;
+    }
+  }
+
+  .rewards-payment-completed {
+    margin-top: 8px;
+    background: #E7FDEA;
+    padding: 6px 12px;
+    border-radius: 6px;
+
+    .icon {
+      display: none;
+    }
   }
 `
 

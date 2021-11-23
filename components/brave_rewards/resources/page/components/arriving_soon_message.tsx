@@ -4,42 +4,22 @@
 
 import * as React from 'react'
 
-import { MoneyBagIcon } from '../../shared/components/icons/money_bag_icon'
-
-import { LocaleContext, formatMessage } from '../../shared/lib/locale_context'
+import { PaymentStatusView } from '../../shared/components/payment_status_view'
 
 import * as style from './arriving_soon_message.style'
 
 interface Props {
   earningsLastMonth: number
-  estimatedPendingDays: string
+  nextPaymentDate: number
 }
 
 export function ArrivingSoonMessage (props: Props) {
-  const { getString } = React.useContext(LocaleContext)
-
   return (
     <style.root>
-      <style.body>
-        <MoneyBagIcon />
-        {
-          formatMessage(getString('pendingRewardsMessage'), [
-            <span key='amount'>
-              +{props.earningsLastMonth} BAT
-            </span>,
-            props.estimatedPendingDays
-          ])
-        }
-      </style.body>
-      <style.note>
-        {
-          formatMessage(getString('pendingRewardsNote'), {
-            tags: {
-              $1: (content) => <strong key='1'>{content}</strong>
-            }
-          })
-        }
-      </style.note>
+      <PaymentStatusView
+        amount={props.earningsLastMonth}
+        nextPaymentDate={props.nextPaymentDate}
+      />
     </style.root>
   )
 }

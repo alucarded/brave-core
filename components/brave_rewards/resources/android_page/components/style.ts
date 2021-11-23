@@ -86,27 +86,54 @@ export const StyledWalletClose = styled('div')<{}>`
 `
 
 export const StyledArrivingSoon = styled.div`
-  background: rgba(93, 181, 252, 0.2);
   margin-bottom: 8px;
-  padding: 4px;
-  color: var(--brave-palette-neutral700);
-  text-align: center;
-  font-size: 12px;
-  line-height: 22px;
+  color: var(--brave-palette-neutral900);
+  font-size: 14px;
+  line-height: 24px;
 
-  span.amount {
-    color: var(--brave-palette-neutral900);
+  a {
+    color: var(--brave-palette-blurple500);
     font-weight: 600;
-    font-size: 14px;
-    line-height: 24px;
   }
 
-  .icon {
-    height: 16px;
-    width: auto;
-    fill: var(--brave-palette-blue500);
-    vertical-align: middle;
-    margin-bottom: 3px;
-    margin-right: 8px;
+  .rewards-payment-pending {
+    background: #E8F4FF;
+    border-radius: 4px;
+    padding: 6px 21px;
+    display: flex;
+    align-items: center;
+
+    .icon {
+      height: 16px;
+      width: auto;
+      margin-right: 6px;
+    }
+  }
+
+  .rewards-payment-amount {
+    .plus {
+      margin-right: 2px;
+    }
+  }
+
+  .rewards-payment-completed {
+    background: #E7FDEA;
+    border-radius: 4px;
+    padding: 6px 21px;
+    display: flex;
+    align-items: center;
+
+    .icon {
+      height: 43px;
+      width: auto;
+      margin-right: 6px;
+    }
+  }
+
+  .rewards-payment-not-arrived {
+    display: block;
+    font-size: 12px;
+    line-height: 22px;
+    color: var(--brave-palette-neutral700);
   }
 `

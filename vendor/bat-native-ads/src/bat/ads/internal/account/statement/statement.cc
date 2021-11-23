@@ -29,7 +29,8 @@ StatementInfo Statement::Get(const base::Time& from,
   statement.ads_received_this_month = GetAdsReceivedThisMonth();
 
   statement.earnings_this_month = GetEarningsForThisMonth();
-  statement.earnings_last_month = GetEarningsForLastMonth();
+  // TODO: Mocking
+  statement.earnings_last_month = 1.3;  // GetEarningsForLastMonth();
 
   statement.cleared_transactions = transactions::GetCleared(from, to);
   statement.uncleared_transactions = transactions::GetUncleared();

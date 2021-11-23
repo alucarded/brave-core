@@ -20,7 +20,6 @@ import {
 import { Grid, Column, Select, ControlWrapper } from 'brave-ui/components'
 
 import { ArrivingSoonMessage } from './arriving_soon_message'
-import { getDaysUntilRewardsPayment } from '../../shared/lib/pending_rewards'
 
 // Utils
 import * as utils from '../utils'
@@ -411,8 +410,6 @@ class AdsBox extends React.Component<Props, State> {
     const rows = this.getGroupedAdsHistory(historyEntries, savedOnly)
     const tokenString = getLocale('tokens')
 
-    const estimatedPendingDays = getDaysUntilRewardsPayment(nextPaymentDate)
-
     return (
       <>
         <Box
@@ -429,13 +426,10 @@ class AdsBox extends React.Component<Props, State> {
           onSettingsClick={this.onSettingsToggle}
           attachedAlert={this.adsNotSupportedAlert(adsIsSupported)}
         >
-          {
-            earningsLastMonth > 0 && estimatedPendingDays &&
-              <ArrivingSoonMessage
-                earningsLastMonth={earningsLastMonth}
-                estimatedPendingDays={estimatedPendingDays}
-              />
-          }
+          <ArrivingSoonMessage
+            earningsLastMonth={earningsLastMonth}
+            nextPaymentDate={nextPaymentDate}
+          />
           <List title={getLocale('adsCurrentEarnings')}>
             <Tokens
               value={earningsThisMonth.toFixed(3)}
