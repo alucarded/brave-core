@@ -62,16 +62,17 @@ namespace {
 
 void ValidateErrorCode(BraveWalletProviderImpl* provider,
                        const std::string& payload,
-                       ProviderErrors expected) {
+                       mojom::ProviderError expected) {
   bool callback_is_called = false;
   provider->AddEthereumChain(
-      payload, base::BindLambdaForTesting(
-                   [&callback_is_called, &expected](
-                       int error_code, const std::string& error_message) {
-                     EXPECT_EQ(error_code, static_cast<int>(expected));
-                     ASSERT_FALSE(error_message.empty());
-                     callback_is_called = true;
-                   }));
+      payload,
+      base::BindLambdaForTesting(
+          [&callback_is_called, &expected](mojom::ProviderError error,
+                                           const std::string& error_message) {
+            EXPECT_EQ(error, expected);
+            ASSERT_FALSE(error_message.empty());
+            callback_is_called = true;
+          }));
   ASSERT_TRUE(callback_is_called);
 }
 
@@ -310,7 +311,7 @@ class BraveWalletProviderImplUnitTest : public testing::Test {
                            const std::string& hardware_signature,
                            const std::string& error_in,
                            std::string* signature_out,
-                           int* error_out,
+                           mojom::ProviderError* error_out,
                            std::string* error_message_out) {
     if (!signature_out || !error_out || !error_message_out)
       return;
@@ -318,7 +319,8 @@ class BraveWalletProviderImplUnitTest : public testing::Test {
     base::RunLoop run_loop;
     provider()->SignMessage(
         address, message,
-        base::BindLambdaForTesting([&](const std::string& signature, int error,
+        base::BindLambdaForTesting([&](const std::string& signature,
+                                       mojom::ProviderError error,
                                        const std::string& error_message) {
           *signature_out = signature;
           *error_out = error;
@@ -337,7 +339,7 @@ class BraveWalletProviderImplUnitTest : public testing::Test {
                    const std::string& address,
                    const std::string& message,
                    std::string* signature_out,
-                   int* error_out,
+                   mojom::ProviderError* error_out,
                    std::string* error_message_out) {
     if (!signature_out || !error_out || !error_message_out)
       return;
@@ -345,7 +347,8 @@ class BraveWalletProviderImplUnitTest : public testing::Test {
     base::RunLoop run_loop;
     provider()->SignMessage(
         address, message,
-        base::BindLambdaForTesting([&](const std::string& signature, int error,
+        base::BindLambdaForTesting([&](const std::string& signature,
+                                       mojom::ProviderError error,
                                        const std::string& error_message) {
           *signature_out = signature;
           *error_out = error;
@@ -366,7 +369,7 @@ class BraveWalletProviderImplUnitTest : public testing::Test {
                         const std::string& message_to_sign,
                         base::Value&& domain,
                         std::string* signature_out,
-                        int* error_out,
+                        mojom::ProviderError* error_out,
                         std::string* error_message_out) {
     if (!signature_out || !error_out || !error_message_out)
       return;
@@ -374,7 +377,8 @@ class BraveWalletProviderImplUnitTest : public testing::Test {
     base::RunLoop run_loop;
     provider()->SignTypedMessage(
         address, message, message_to_sign, std::move(domain),
-        base::BindLambdaForTesting([&](const std::string& signature, int error,
+        base::BindLambdaForTesting([&](const std::string& signature,
+                                       mojom::ProviderError error,
                                        const std::string& error_message) {
           *signature_out = signature;
           *error_out = error;
@@ -465,16 +469,17 @@ class BraveWalletProviderImplUnitTest : public testing::Test {
 
   void SwitchEthereumChain(const std::string& chain_id,
                            absl::optional<bool> user_approved,
-                           int* error_out,
+                           mojom::ProviderError* error_out,
                            std::string* error_message_out) {
     base::RunLoop run_loop;
     provider_->SwitchEthereumChain(
-        chain_id, base::BindLambdaForTesting(
-                      [&](int error, const std::string& error_message) {
-                        *error_out = error;
-                        *error_message_out = error_message;
-                        run_loop.Quit();
-                      }));
+        chain_id,
+        base::BindLambdaForTesting(
+            [&](mojom::ProviderError error, const std::string& error_message) {
+              *error_out = error;
+              *error_message_out = error_message;
+              run_loop.Quit();
+            }));
     if (user_approved)
       eth_json_rpc_controller_->NotifySwitchChainRequestProcessed(
           *user_approved, GetOrigin());
@@ -501,31 +506,31 @@ class BraveWalletProviderImplUnitTest : public testing::Test {
 };
 
 TEST_F(BraveWalletProviderImplUnitTest, ValidateBrokenPayloads) {
-  ValidateErrorCode(provider(), "", ProviderErrors::kInvalidParams);
-  ValidateErrorCode(provider(), R"({})", ProviderErrors::kInvalidParams);
+  ValidateErrorCode(provider(), "", mojom::ProviderError::kInvalidParams);
+  ValidateErrorCode(provider(), R"({})", mojom::ProviderError::kInvalidParams);
   ValidateErrorCode(provider(), R"({"params": []})",
-                    ProviderErrors::kInvalidParams);
+                    mojom::ProviderError::kInvalidParams);
   ValidateErrorCode(provider(), R"({"params": [{}]})",
-                    ProviderErrors::kInvalidParams);
+                    mojom::ProviderError::kInvalidParams);
   ValidateErrorCode(provider(), R"({"params": {}})",
-                    ProviderErrors::kInvalidParams);
+                    mojom::ProviderError::kInvalidParams);
   ValidateErrorCode(provider(), R"({"params": [{
         "chainName": 'Binance1 Smart Chain',
       }]})",
-                    ProviderErrors::kInvalidParams);
+                    mojom::ProviderError::kInvalidParams);
   ValidateErrorCode(provider(), R"({"params": [{
       "chainId": '0x386'
     }]})",
-                    ProviderErrors::kInvalidParams);
+                    mojom::ProviderError::kInvalidParams);
   ValidateErrorCode(provider(), R"({"params": [{
       "rpcUrls": ['https://bsc-dataseed.binance.org/'],
     }]})",
-                    ProviderErrors::kInvalidParams);
+                    mojom::ProviderError::kInvalidParams);
   ValidateErrorCode(provider(), R"({"params": [{
       "chainName": 'Binance1 Smart Chain',
       "rpcUrls": ['https://bsc-dataseed.binance.org/'],
     }]})",
-                    ProviderErrors::kInvalidParams);
+                    mojom::ProviderError::kInvalidParams);
 }
 
 TEST_F(BraveWalletProviderImplUnitTest, EmptyDelegate) {
@@ -539,7 +544,7 @@ TEST_F(BraveWalletProviderImplUnitTest, EmptyDelegate) {
         "chainName": "Binance1 Smart Chain",
         "rpcUrls": ["https://bsc-dataseed.binance.org/"]
       }]})",
-                    ProviderErrors::kInternalError);
+                    mojom::ProviderError::kInternalError);
 }
 
 TEST_F(BraveWalletProviderImplUnitTest, OnAddEthereumChain) {
@@ -552,13 +557,12 @@ TEST_F(BraveWalletProviderImplUnitTest, OnAddEthereumChain) {
         "chainName": "Binance1 Smart Chain",
         "rpcUrls": ["https://bsc-dataseed.binance.org/"],
       },]})",
-      base::BindLambdaForTesting(
-          [&run_loop](int error_code, const std::string& error_message) {
-            EXPECT_EQ(error_code,
-                      static_cast<int>(ProviderErrors::kUserRejectedRequest));
-            ASSERT_FALSE(error_message.empty());
-            run_loop.Quit();
-          }));
+      base::BindLambdaForTesting([&run_loop](mojom::ProviderError error,
+                                             const std::string& error_message) {
+        EXPECT_EQ(error, mojom::ProviderError::kUserRejectedRequest);
+        ASSERT_FALSE(error_message.empty());
+        run_loop.Quit();
+      }));
   provider()->OnAddEthereumChain("0x111", false);
   run_loop.Run();
 }
@@ -576,9 +580,8 @@ TEST_F(BraveWalletProviderImplUnitTest,
         "rpcUrls": ["https://bsc-dataseed.binance.org/"]
       }]})",
       base::BindLambdaForTesting(
-          [&](int error_code, const std::string& error_message) {
-            EXPECT_EQ(error_code,
-                      static_cast<int>(ProviderErrors::kUserRejectedRequest));
+          [&](mojom::ProviderError error, const std::string& error_message) {
+            EXPECT_EQ(error, mojom::ProviderError::kUserRejectedRequest);
             EXPECT_EQ(error_message, "test message");
             ++callback_called;
             run_loop.Quit();
@@ -602,9 +605,10 @@ TEST_F(BraveWalletProviderImplUnitTest, AddAndApproveTransaction) {
                          "0xbe862ad9abfe6f22bcb087716c7d89a26051f74c",
                          "0x016345785d8a0000", std::vector<uint8_t>()),
       from(),
-      base::BindLambdaForTesting([&](const std::string& hash, int error,
+      base::BindLambdaForTesting([&](const std::string& hash,
+                                     mojom::ProviderError error,
                                      const std::string& error_message) {
-        EXPECT_EQ(error, 0);
+        EXPECT_EQ(error, mojom::ProviderError::kSuccess);
         EXPECT_FALSE(hash.empty());
         EXPECT_TRUE(error_message.empty());
         callback_called = true;
@@ -651,9 +655,10 @@ TEST_F(BraveWalletProviderImplUnitTest, AddAndApproveTransactionError) {
                          // Bad address
                          "0xbe8", "0x016345785d8a0000", std::vector<uint8_t>()),
       from(),
-      base::BindLambdaForTesting([&](const std::string& hash, int error,
+      base::BindLambdaForTesting([&](const std::string& hash,
+                                     mojom::ProviderError error,
                                      const std::string& error_message) {
-        EXPECT_NE(error, 0);
+        EXPECT_NE(error, mojom::ProviderError::kSuccess);
         EXPECT_TRUE(hash.empty());
         EXPECT_FALSE(error_message.empty());
         callback_called = true;
@@ -669,9 +674,10 @@ TEST_F(BraveWalletProviderImplUnitTest, AddAndApproveTransactionNoPermission) {
                          "0xbe862ad9abfe6f22bcb087716c7d89a26051f74c",
                          "0x016345785d8a0000", std::vector<uint8_t>()),
       "0xbe862ad9abfe6f22bcb087716c7d89a26051f74d",
-      base::BindLambdaForTesting([&](const std::string& hash, int error,
+      base::BindLambdaForTesting([&](const std::string& hash,
+                                     mojom::ProviderError error,
                                      const std::string& error_message) {
-        EXPECT_NE(error, 0);
+        EXPECT_NE(error, mojom::ProviderError::kSuccess);
         EXPECT_TRUE(hash.empty());
         EXPECT_FALSE(error_message.empty());
         callback_called = true;
@@ -695,9 +701,10 @@ TEST_F(BraveWalletProviderImplUnitTest, AddAndApprove1559Transaction) {
                              "0x00", std::vector<uint8_t>()),
           "0x04", "0x1", "0x1", nullptr),
       from(),
-      base::BindLambdaForTesting([&](const std::string& hash, int error,
+      base::BindLambdaForTesting([&](const std::string& hash,
+                                     mojom::ProviderError error,
                                      const std::string& error_message) {
-        EXPECT_EQ(error, 0);
+        EXPECT_EQ(error, mojom::ProviderError::kSuccess);
         EXPECT_FALSE(hash.empty());
         EXPECT_TRUE(error_message.empty());
         callback_called = true;
@@ -745,9 +752,10 @@ TEST_F(BraveWalletProviderImplUnitTest, AddAndApprove1559TransactionNoChainId) {
                              "0x00", std::vector<uint8_t>()),
           "0x0", "0x1", "0x1", nullptr),
       from(),
-      base::BindLambdaForTesting([&](const std::string& hash, int error,
+      base::BindLambdaForTesting([&](const std::string& hash,
+                                     mojom::ProviderError error,
                                      const std::string& error_message) {
-        EXPECT_EQ(error, 0);
+        EXPECT_EQ(error, mojom::ProviderError::kSuccess);
         EXPECT_FALSE(hash.empty());
         EXPECT_TRUE(error_message.empty());
         tx_hash = hash;
@@ -761,9 +769,10 @@ TEST_F(BraveWalletProviderImplUnitTest, AddAndApprove1559TransactionNoChainId) {
                              "0x00", std::vector<uint8_t>()),
           "", "0x1", "0x1", nullptr),
       from(),
-      base::BindLambdaForTesting([&](const std::string& hash, int error,
+      base::BindLambdaForTesting([&](const std::string& hash,
+                                     mojom::ProviderError error,
                                      const std::string& error_message) {
-        EXPECT_EQ(error, 0);
+        EXPECT_EQ(error, mojom::ProviderError::kSuccess);
         EXPECT_FALSE(hash.empty());
         EXPECT_TRUE(error_message.empty());
         tx_hash = hash;
@@ -794,9 +803,10 @@ TEST_F(BraveWalletProviderImplUnitTest, AddAndApprove1559TransactionError) {
                              "0x00", std::vector<uint8_t>()),
           "0x04", "0x0", "0x0", nullptr),
       from(),
-      base::BindLambdaForTesting([&](const std::string& hash, int error,
+      base::BindLambdaForTesting([&](const std::string& hash,
+                                     mojom::ProviderError error,
                                      const std::string& error_message) {
-        EXPECT_NE(error, 0);
+        EXPECT_NE(error, mojom::ProviderError::kSuccess);
         EXPECT_TRUE(hash.empty());
         EXPECT_FALSE(error_message.empty());
         callback_called = true;
@@ -815,9 +825,10 @@ TEST_F(BraveWalletProviderImplUnitTest,
                              "0x00", std::vector<uint8_t>()),
           "0x04", "0x0", "0x0", nullptr),
       "0xbe862ad9abfe6f22bcb087716c7d89a26051f74d",
-      base::BindLambdaForTesting([&](const std::string& hash, int error,
+      base::BindLambdaForTesting([&](const std::string& hash,
+                                     mojom::ProviderError error,
                                      const std::string& error_message) {
-        EXPECT_NE(error, 0);
+        EXPECT_NE(error, mojom::ProviderError::kSuccess);
         EXPECT_TRUE(hash.empty());
         EXPECT_FALSE(error_message.empty());
         callback_called = true;
@@ -837,9 +848,9 @@ TEST_F(BraveWalletProviderImplUnitTest, RequestEthereumPermissions) {
   AddEthereumPermission(url);
   bool permission_callback_called = false;
   provider()->RequestEthereumPermissions(base::BindLambdaForTesting(
-      [&](const std::vector<std::string>& allowed_accounts, int error,
-          const std::string& error_message) {
-        EXPECT_EQ(error, 0);
+      [&](const std::vector<std::string>& allowed_accounts,
+          mojom::ProviderError error, const std::string& error_message) {
+        EXPECT_EQ(error, mojom::ProviderError::kSuccess);
         EXPECT_TRUE(error_message.empty());
         EXPECT_EQ(allowed_accounts.size(), 1UL);
         EXPECT_EQ(allowed_accounts[0], from());
@@ -859,9 +870,9 @@ TEST_F(BraveWalletProviderImplUnitTest,
   CreateWallet();
   AddAccount();
   provider()->RequestEthereumPermissions(base::BindLambdaForTesting(
-      [&](const std::vector<std::string>& allowed_accounts, int error,
-          const std::string& error_message) {
-        EXPECT_NE(error, 0);
+      [&](const std::vector<std::string>& allowed_accounts,
+          mojom::ProviderError error, const std::string& error_message) {
+        EXPECT_NE(error, mojom::ProviderError::kSuccess);
         EXPECT_FALSE(error_message.empty());
         EXPECT_TRUE(allowed_accounts.empty());
         permission_callback_called = true;
@@ -877,9 +888,9 @@ TEST_F(BraveWalletProviderImplUnitTest, RequestEthereumPermissionsNoWallet) {
       base::BindLambdaForTesting([&]() { new_setup_callback_called = true; }));
   base::RunLoop run_loop;
   provider()->RequestEthereumPermissions(base::BindLambdaForTesting(
-      [&](const std::vector<std::string>& allowed_accounts, int error,
-          const std::string& error_message) {
-        EXPECT_NE(error, 0);
+      [&](const std::vector<std::string>& allowed_accounts,
+          mojom::ProviderError error, const std::string& error_message) {
+        EXPECT_NE(error, mojom::ProviderError::kSuccess);
         EXPECT_FALSE(error_message.empty());
         EXPECT_TRUE(allowed_accounts.empty());
         run_loop.Quit();
@@ -892,19 +903,19 @@ TEST_F(BraveWalletProviderImplUnitTest, SignMessage) {
   CreateWallet();
   AddAccount();
   std::string signature;
-  int error;
+  mojom::ProviderError error;
   std::string error_message;
   SignMessage(absl::nullopt, "1234", "0x1234", &signature, &error,
               &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInvalidParams));
+  EXPECT_EQ(error, mojom::ProviderError::kInvalidParams);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
   SignMessage(absl::nullopt, "0x12345678", "0x1234", &signature, &error,
               &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInvalidParams));
+  EXPECT_EQ(error, mojom::ProviderError::kInvalidParams);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
@@ -912,7 +923,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignMessage) {
   SignMessage(absl::nullopt, address, "0x1234", &signature, &error,
               &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUnauthorized));
+  EXPECT_EQ(error, mojom::ProviderError::kUnauthorized);
   EXPECT_EQ(error_message,
             l10n_util::GetStringFUTF8(IDS_WALLET_ETH_SIGN_NOT_AUTHED,
                                       base::ASCIIToUTF16(address)));
@@ -923,7 +934,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignMessage) {
   SignMessage(absl::nullopt, addresses[0], "0x1234", &signature, &error,
               &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUnauthorized));
+  EXPECT_EQ(error, mojom::ProviderError::kUnauthorized);
   EXPECT_EQ(error_message,
             l10n_util::GetStringFUTF8(IDS_WALLET_ETH_SIGN_NOT_AUTHED,
                                       base::ASCIIToUTF16(addresses[0])));
@@ -933,14 +944,14 @@ TEST_F(BraveWalletProviderImplUnitTest, SignMessage) {
   SignMessage(true, addresses[0], "0x1234", &signature, &error, &error_message);
 
   EXPECT_FALSE(signature.empty());
-  EXPECT_EQ(error, 0);
+  EXPECT_EQ(error, mojom::ProviderError::kSuccess);
   EXPECT_TRUE(error_message.empty());
 
   // User reject request
   SignMessage(false, addresses[0], "0x1234", &signature, &error,
               &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUserRejectedRequest));
+  EXPECT_EQ(error, mojom::ProviderError::kUserRejectedRequest);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_USER_REJECTED_REQUEST));
 
@@ -951,7 +962,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignMessage) {
   SignMessage(absl::nullopt, addresses[0], "0x1234", &signature, &error,
               &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUnauthorized));
+  EXPECT_EQ(error, mojom::ProviderError::kUnauthorized);
   EXPECT_EQ(error_message,
             l10n_util::GetStringFUTF8(IDS_WALLET_ETH_SIGN_NOT_AUTHED,
                                       base::ASCIIToUTF16(addresses[0])));
@@ -964,21 +975,21 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
   const std::string valid_message_to_sign =
       "be609aee343fb3c4b28e1df9e632fca64fcfaede20f02e86244efddf30957bd2";
   std::string signature;
-  int error;
+  mojom::ProviderError error;
   std::string error_message;
   base::Value domain(base::Value::Type::DICTIONARY);
   domain.SetIntKey("chainId", 1);
   SignTypedMessage(absl::nullopt, "1234", "{...}", valid_message_to_sign,
                    domain.Clone(), &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInvalidParams));
+  EXPECT_EQ(error, mojom::ProviderError::kInvalidParams);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
   SignTypedMessage(absl::nullopt, "0x12345678", "{...}", valid_message_to_sign,
                    domain.Clone(), &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInvalidParams));
+  EXPECT_EQ(error, mojom::ProviderError::kInvalidParams);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
@@ -987,7 +998,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
   SignTypedMessage(absl::nullopt, address, "{...}", valid_message_to_sign,
                    base::Value("not dict"), &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInvalidParams));
+  EXPECT_EQ(error, mojom::ProviderError::kInvalidParams);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
@@ -995,7 +1006,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
   SignTypedMessage(absl::nullopt, address, "{...}", "brave", domain.Clone(),
                    &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInvalidParams));
+  EXPECT_EQ(error, mojom::ProviderError::kInvalidParams);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
@@ -1003,7 +1014,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
   SignTypedMessage(absl::nullopt, address, "{...}", "deadbeef", domain.Clone(),
                    &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInvalidParams));
+  EXPECT_EQ(error, mojom::ProviderError::kInvalidParams);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
@@ -1013,7 +1024,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
   SignTypedMessage(absl::nullopt, address, "{...}", valid_message_to_sign,
                    domain.Clone(), &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInternalError));
+  EXPECT_EQ(error, mojom::ProviderError::kInternalError);
   EXPECT_EQ(error_message,
             l10n_util::GetStringFUTF8(
                 IDS_BRAVE_WALLET_SIGN_TYPED_MESSAGE_CHAIN_ID_MISMATCH,
@@ -1023,7 +1034,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
   SignTypedMessage(absl::nullopt, address, "{...}", valid_message_to_sign,
                    domain.Clone(), &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUnauthorized));
+  EXPECT_EQ(error, mojom::ProviderError::kUnauthorized);
   EXPECT_EQ(error_message,
             l10n_util::GetStringFUTF8(IDS_WALLET_ETH_SIGN_NOT_AUTHED,
                                       base::ASCIIToUTF16(address)));
@@ -1034,7 +1045,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
   SignTypedMessage(absl::nullopt, addresses[0], "{...}", valid_message_to_sign,
                    domain.Clone(), &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUnauthorized));
+  EXPECT_EQ(error, mojom::ProviderError::kUnauthorized);
   EXPECT_EQ(error_message,
             l10n_util::GetStringFUTF8(IDS_WALLET_ETH_SIGN_NOT_AUTHED,
                                       base::ASCIIToUTF16(addresses[0])));
@@ -1045,14 +1056,14 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
                    domain.Clone(), &signature, &error, &error_message);
 
   EXPECT_FALSE(signature.empty());
-  EXPECT_EQ(error, 0);
+  EXPECT_EQ(error, mojom::ProviderError::kSuccess);
   EXPECT_TRUE(error_message.empty());
 
   // User reject request
   SignTypedMessage(false, addresses[0], "{...}", valid_message_to_sign,
                    domain.Clone(), &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUserRejectedRequest));
+  EXPECT_EQ(error, mojom::ProviderError::kUserRejectedRequest);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_USER_REJECTED_REQUEST));
 
@@ -1063,7 +1074,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignTypedMessage) {
   SignTypedMessage(absl::nullopt, addresses[0], "{...}", valid_message_to_sign,
                    domain.Clone(), &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUnauthorized));
+  EXPECT_EQ(error, mojom::ProviderError::kUnauthorized);
   EXPECT_EQ(error_message,
             l10n_util::GetStringFUTF8(IDS_WALLET_ETH_SIGN_NOT_AUTHED,
                                       base::ASCIIToUTF16(addresses[0])));
@@ -1235,7 +1246,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignMessageHardware) {
   AddHardwareAccount(address);
   std::string signature;
   std::string expected_signature = "0xExpectedSignature";
-  int error;
+  mojom::ProviderError error;
   std::string error_message;
   GURL url("https://brave.com");
   Navigate(url);
@@ -1246,7 +1257,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SignMessageHardware) {
                       &signature, &error, &error_message);
   EXPECT_FALSE(signature.empty());
   EXPECT_EQ(signature, expected_signature);
-  EXPECT_EQ(error, 0);
+  EXPECT_EQ(error, mojom::ProviderError::kSuccess);
   EXPECT_TRUE(error_message.empty());
 
   // forwarding errors from javascript
@@ -1254,14 +1265,14 @@ TEST_F(BraveWalletProviderImplUnitTest, SignMessageHardware) {
   SignMessageHardware(false, address, "0x1234", expected_signature,
                       expected_error, &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kInternalError));
+  EXPECT_EQ(error, mojom::ProviderError::kInternalError);
   EXPECT_EQ(error_message, expected_error);
 
   // user rejected request
   SignMessageHardware(false, address, "0x1234", expected_signature, "",
                       &signature, &error, &error_message);
   EXPECT_TRUE(signature.empty());
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUserRejectedRequest));
+  EXPECT_EQ(error, mojom::ProviderError::kUserRejectedRequest);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_USER_REJECTED_REQUEST));
 }
@@ -1271,13 +1282,13 @@ TEST_F(BraveWalletProviderImplUnitTest, SwitchEthereumChain) {
   CreateBraveWalletTabHelper();
   Navigate(GURL("https://bravesoftware.com"));
   brave_wallet_tab_helper()->SetSkipDelegateForTesting(true);
-  int error = -1;
+  mojom::ProviderError error = mojom::ProviderError::kUnknown;
   std::string error_message;
 
   // chain doesn't exist yet
   std::string chain_id = "0x111";
   SwitchEthereumChain(chain_id, absl::nullopt, &error, &error_message);
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUnknownChain));
+  EXPECT_EQ(error, mojom::ProviderError::kUnknownChain);
   EXPECT_EQ(error_message,
             l10n_util::GetStringFUTF8(IDS_WALLET_UNKNOWN_CHAIN,
                                       base::ASCIIToUTF16(chain_id)));
@@ -1285,13 +1296,13 @@ TEST_F(BraveWalletProviderImplUnitTest, SwitchEthereumChain) {
 
   // already on this chain
   SwitchEthereumChain("0x1", absl::nullopt, &error, &error_message);
-  EXPECT_EQ(error, 0);
+  EXPECT_EQ(error, mojom::ProviderError::kSuccess);
   EXPECT_TRUE(error_message.empty());
   EXPECT_FALSE(brave_wallet_tab_helper()->IsShowingBubble());
 
   // user rejected
   SwitchEthereumChain("0x4", false, &error, &error_message);
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUserRejectedRequest));
+  EXPECT_EQ(error, mojom::ProviderError::kUserRejectedRequest);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_USER_REJECTED_REQUEST));
   EXPECT_TRUE(brave_wallet_tab_helper()->IsShowingBubble());
@@ -1300,7 +1311,7 @@ TEST_F(BraveWalletProviderImplUnitTest, SwitchEthereumChain) {
 
   // user approved
   SwitchEthereumChain("0x4", true, &error, &error_message);
-  EXPECT_EQ(error, 0);
+  EXPECT_EQ(error, mojom::ProviderError::kSuccess);
   EXPECT_TRUE(error_message.empty());
   EXPECT_TRUE(brave_wallet_tab_helper()->IsShowingBubble());
   brave_wallet_tab_helper()->CloseBubble();
@@ -1310,14 +1321,14 @@ TEST_F(BraveWalletProviderImplUnitTest, SwitchEthereumChain) {
   // one request per origin
   base::RunLoop run_loop;
   provider()->SwitchEthereumChain(
-      "0x1", base::BindLambdaForTesting(
-                 [&](int error, const std::string& error_message) {
-                   EXPECT_EQ(error, 0);
-                   EXPECT_TRUE(error_message.empty());
-                   run_loop.Quit();
-                 }));
+      "0x1", base::BindLambdaForTesting([&](mojom::ProviderError error,
+                                            const std::string& error_message) {
+        EXPECT_EQ(error, mojom::ProviderError::kSuccess);
+        EXPECT_TRUE(error_message.empty());
+        run_loop.Quit();
+      }));
   SwitchEthereumChain("0x1", absl::nullopt, &error, &error_message);
-  EXPECT_EQ(error, static_cast<int>(ProviderErrors::kUserRejectedRequest));
+  EXPECT_EQ(error, mojom::ProviderError::kUserRejectedRequest);
   EXPECT_EQ(error_message,
             l10n_util::GetStringUTF8(IDS_WALLET_ALREADY_IN_PROGRESS_ERROR));
   eth_json_rpc_controller()->NotifySwitchChainRequestProcessed(true,
@@ -1339,12 +1350,12 @@ TEST_F(BraveWalletProviderImplUnitTest, AddEthereumChainSwitchesForInnactive) {
       }]})";
   base::RunLoop run_loop;
   provider()->AddEthereumChain(
-      params, base::BindLambdaForTesting(
-                  [&](int error_code, const std::string& error_message) {
-                    EXPECT_EQ(error_code, 0);
-                    EXPECT_TRUE(error_message.empty());
-                    run_loop.Quit();
-                  }));
+      params, base::BindLambdaForTesting([&](mojom::ProviderError error_code,
+                                             const std::string& error_message) {
+        EXPECT_EQ(error_code, mojom::ProviderError::kSuccess);
+        EXPECT_TRUE(error_message.empty());
+        run_loop.Quit();
+      }));
   EXPECT_TRUE(brave_wallet_tab_helper()->IsShowingBubble());
   eth_json_rpc_controller_->NotifySwitchChainRequestProcessed(true,
                                                               GetOrigin());
