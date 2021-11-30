@@ -22,9 +22,9 @@ branding_replacements = [
 default_replacements = [
     (r'Brave Web Store', r'Web Store'),
     (r'Automatically send usage statistics and crash reports to Brave',
-     r'Automatically send crash reports to Brave'),
+     r'Automatically send reports to Brave when the browser crashes or hangs'),
     (r'Automatically sends usage statistics and crash reports to Brave',
-     r'Automatically sends crash reports to Brave'),
+     r'Automatically sends reports to Brave when the browser crashes or hangs'),
     (r'You\'re incognito', r'This is a private window'),
     (r'an incognito', r'a private'),
     (r'an Incognito', r'a Private'),
