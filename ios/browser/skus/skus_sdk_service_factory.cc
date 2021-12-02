@@ -18,9 +18,9 @@ namespace skus {
 // static
 mojom::SkusSdk* SkusSdkServiceFactory::GetForBrowserState(
     ChromeBrowserState* browser_state) {
-  return nullptr; // Currently don't have the correct type to return
+  return nullptr;  // Currently don't have the correct type to return
   // return static_cast<SkusSdkService*>(
-      // GetInstance()->GetServiceForBrowserState(browser_state, true));
+  // GetInstance()->GetServiceForBrowserState(browser_state, true));
 }
 
 // static
@@ -35,16 +35,14 @@ SkusSdkServiceFactory::SkusSdkServiceFactory()
 
 SkusSdkServiceFactory::~SkusSdkServiceFactory() = default;
 
-std::unique_ptr<KeyedService>
-SkusSdkServiceFactory::BuildServiceInstanceFor(
+std::unique_ptr<KeyedService> SkusSdkServiceFactory::BuildServiceInstanceFor(
     web::BrowserState* context) const {
   auto* browser_state = ChromeBrowserState::FromBrowserState(context);
   if (browser_state->IsOffTheRecord()) {
     return nullptr;
   }
-  std::unique_ptr<SkusSdkService> sku_service(
-      new SkusSdkService(browser_state->GetPrefs(),
-                         browser_state->GetSharedURLLoaderFactory()));
+  std::unique_ptr<SkusSdkService> sku_service(new SkusSdkService(
+      browser_state->GetPrefs(), browser_state->GetSharedURLLoaderFactory()));
   return sku_service;
 }
 

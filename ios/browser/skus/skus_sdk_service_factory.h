@@ -26,8 +26,7 @@ class SkusSdk;
 class SkusSdkServiceFactory : public BrowserStateKeyedServiceFactory {
  public:
   // Creates the service if it doesn't exist already for |browser_state|.
-  static mojom::SkusSdk* GetForBrowserState(
-      ChromeBrowserState* browser_state);
+  static mojom::SkusSdk* GetForBrowserState(ChromeBrowserState* browser_state);
 
   static SkusSdkServiceFactory* GetInstance();
 
@@ -46,8 +45,7 @@ class SkusSdkServiceFactory : public BrowserStateKeyedServiceFactory {
       web::BrowserState* context) const override;
 
   SkusSdkServiceFactory(const SkusSdkServiceFactory&) = delete;
-  SkusSdkServiceFactory& operator=(const SkusSdkServiceFactory&) =
-      delete;
+  SkusSdkServiceFactory& operator=(const SkusSdkServiceFactory&) = delete;
 };
 
 }  // namespace skus

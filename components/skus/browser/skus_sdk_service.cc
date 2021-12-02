@@ -10,9 +10,9 @@
 #include "base/json/json_reader.h"
 #include "base/task/post_task.h"
 #include "base/threading/sequenced_task_runner_handle.h"
+#include "brave/components/skus/browser/pref_names.h"
 #include "brave/components/skus/browser/rs/cxx/src/lib.rs.h"
 #include "brave/components/skus/browser/rs/cxx/src/shim.h"
-#include "brave/components/skus/browser/pref_names.h"
 #include "brave/components/skus/browser/skus_sdk_context_impl.h"
 #include "brave/components/skus/browser/skus_utils.h"
 #include "components/prefs/pref_service.h"
@@ -64,8 +64,7 @@ void OnCredentialSummary(skus::CredentialSummaryCallbackState* callback_state,
         callback_state->domain == "vpn.brave.software") {
       const base::Value* active = records_v->FindKey("active");
       if (active) {
-        bool has_credential =
-            active && active->is_bool() && active->GetBool();
+        bool has_credential = active && active->is_bool() && active->GetBool();
         callback_state->prefs->SetBoolean(skus::prefs::kSkusVPNHasCredential,
                                           has_credential);
       }
@@ -85,11 +84,9 @@ namespace skus {
 SkusSdkService::SkusSdkService(
     PrefService* prefs,
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory)
-    : context_(std::make_unique<skus::SkusSdkContextImpl>(
-          prefs,
-          url_loader_factory)),
-      sdk_(
-          initialize_sdk(std::move(context_), skus::GetEnvironment())),
+    : context_(std::make_unique<skus::SkusSdkContextImpl>(prefs,
+                                                          url_loader_factory)),
+      sdk_(initialize_sdk(std::move(context_), skus::GetEnvironment())),
       prefs_(prefs),
       weak_factory_(this) {}
 
@@ -121,8 +118,8 @@ void SkusSdkService::PrepareCredentialsPresentation(
     const std::string& domain,
     const std::string& path,
     skus::mojom::SkusSdk::PrepareCredentialsPresentationCallback callback) {
-  std::unique_ptr<skus::PrepareCredentialsPresentationCallbackState>
-      cbs(new skus::PrepareCredentialsPresentationCallbackState);
+  std::unique_ptr<skus::PrepareCredentialsPresentationCallbackState> cbs(
+      new skus::PrepareCredentialsPresentationCallbackState);
   cbs->cb = std::move(callback);
   cbs->domain = domain;
   cbs->prefs = prefs_;

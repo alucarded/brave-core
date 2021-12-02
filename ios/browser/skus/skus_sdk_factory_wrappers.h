@@ -13,7 +13,7 @@
 
 OBJC_EXPORT
 NS_SWIFT_NAME(Skus.SkusSkusSdk)
-@interface SkusSkusSdkFactory : KeyedServiceFactoryWrapper<id<SkusSkusSdk>>
-@end
+@interface SkusSkusSdkFactory : KeyedServiceFactoryWrapper < id <SkusSkusSdk>
+> @end
 
 #endif  // BRAVE_IOS_BROWSER_SKUS_SKUS_SDK_FACTORY_WRAPPERS_H_
