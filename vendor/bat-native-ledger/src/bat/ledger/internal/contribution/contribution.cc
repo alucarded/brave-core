@@ -16,6 +16,7 @@
 #include "bat/ledger/internal/common/time_util.h"
 #include "bat/ledger/internal/contribution/contribution.h"
 #include "bat/ledger/internal/contribution/contribution_util.h"
+#include "bat/ledger/internal/contribution/pending_contribution_manager.h"
 #include "bat/ledger/internal/ledger_impl.h"
 #include "bat/ledger/internal/publisher/publisher_status_helper.h"
 #include "bat/ledger/internal/wallet/wallet_balance.h"
@@ -267,7 +268,11 @@ void Contribution::ContributionCompletedSaved(
 }
 
 void Contribution::ContributeUnverifiedPublishers() {
-  unverified_->Contribute();
+  ledger_->context()
+      .Get<PendingContributionManager>()
+      .ProcessPendingContributions();
+
+  // unverified_->Contribute();
 }
 
 void Contribution::OneTimeTip(
