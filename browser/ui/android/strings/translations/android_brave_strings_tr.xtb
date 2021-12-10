@@ -764,7 +764,7 @@ Bu talebi kabul etmezseniz VPN yeniden bağlanmaz ve internet bağlantınız gü
 <translation id="5891811606602061966">Hesabın içe aktarımı başarısız oldu, lütfen tekrar deneyin.</translation>
 <translation id="7033470144757208254">Brave, DEX toplayıcısı olarak 0x platformunu kullanır.</translation>
 <translation id="5061574358754621254">Fiyat verileri CoinGecko tarafından sağlanmaktadır</translation>
-<translation id="4626407663177532837">Teklif %0,875 Brave ücretini de içerir.</translation>
+<translation id="4626407663177532837">Teklif %%0,875 Brave ücretini de içerir.</translation>
 <translation id="8574289650879708853">Özel varlık ekle</translation>
 <translation id="7791543448312431591">Ekle</translation>
 <translation id="6600400596821238377">Token adı</translation>

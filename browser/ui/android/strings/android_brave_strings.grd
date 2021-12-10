@@ -2572,7 +2572,7 @@ If you don't accept this request, VPN will not reconnect and your internet conne
       Price data powered by CoinGecko
     </message>
     <message name="IDS_WALLET_SWAP_FEES_NOTICE" desc="Swap fees notice">
-      Quote includes a 0.875% Brave fee.
+      Quote includes a 0.875%% Brave fee.
     </message>
     <message name="IDS_WALLET_ADD_CUSTOM_ASSET" desc="Add custom asset clickable name">
       Add custom asset
