@@ -387,7 +387,7 @@ handler.on(PanelActions.signMessageHardware.getType(), async (store, messageData
   }
   const payload: SignMessageHardwareProcessedPayload =
     signed.success ? { success: signed.success, id: messageData.id, signature: signed.payload }
-                   : { success: signed.success, id: messageData.id, error: signed.error }
+      : { success: signed.success, id: messageData.id, error: signed.error }
   store.dispatch(PanelActions.signMessageHardwareProcessed(payload))
   await store.dispatch(PanelActions.navigateToMain())
   apiProxy.panelHandler.closeUI()
@@ -461,6 +461,14 @@ handler.on(PanelActions.expandRestoreWallet.getType(), async (store) => {
 
 handler.on(PanelActions.expandWalletAccounts.getType(), async (store) => {
   chrome.tabs.create({ url: 'chrome://wallet/crypto/accounts/add-account' }, () => {
+    if (chrome.runtime.lastError) {
+      console.error('tabs.create failed: ' + chrome.runtime.lastError.message)
+    }
+  })
+})
+
+handler.on(PanelActions.expandWalletAddAsset.getType(), async (store) => {
+  chrome.tabs.create({ url: 'chrome://wallet/crypto/portfolio/add-asset' }, () => {
     if (chrome.runtime.lastError) {
       console.error('tabs.create failed: ' + chrome.runtime.lastError.message)
     }
