@@ -24,6 +24,7 @@ program
   .option('--all', 'This flag is deprecated and no longer has any effect')
   .option('--force', 'force reset all projects to origin/ref')
   .option('--ignore_chromium', 'do not update chromium version even if it is stale')
+  .option('--use_pgo', 'download chromium PGO profiles')
 
 const installDepotTools = (options = config.defaultOptions) => {
   options.cwd = config.braveCoreDir

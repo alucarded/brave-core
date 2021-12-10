@@ -848,6 +848,11 @@ Config.prototype.update = function (options) {
   if (options.target) {
     this.buildTarget = options.target
   }
+  if (options.use_pgo) {
+    this.chromePgoPhase = 2 // Download and use chromium PGO profiles
+  } else {
+    this.chromePgoPhase = 0 // Do not use PGO
+  }
 }
 
 Config.prototype.getCachePath = function () {
