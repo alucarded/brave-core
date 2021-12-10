@@ -178,11 +178,15 @@ NTPSponsoredImagesData::NTPSponsoredImagesData(
 NTPSponsoredImagesData::~NTPSponsoredImagesData() = default;
 
 void NTPSponsoredImagesData::ParseCampaignsList(
-    base::Value campaigns,
+    base::Value campaigns_value,
     const base::FilePath& installed_dir) {
-  DCHECK(campaigns.is_list());
-  // TODO(simonhong): Parse campaign list.
-  NOTIMPLEMENTED();
+  DCHECK(campaigns_value.is_list());
+  for (const auto& campaign_value : campaigns_value.GetList()) {
+    const auto campaign =
+        GetCampaignFromValue(campaign_value.Clone(), installed_dir);
+    if (campaign.IsValid())
+      campaigns.push_back(campaign);
+  }
 }
 
 Campaign NTPSponsoredImagesData::GetCampaignFromValue(

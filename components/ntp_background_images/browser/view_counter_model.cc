@@ -32,7 +32,7 @@ void ViewCounterModel::RegisterPageView() {
 }
 
 void ViewCounterModel::RegisterPageViewForBrandedImages() {
-  // NTP BI component is not ready.
+  // NTP SI/SR component is not ready.
   if (total_branded_image_count_ == 0)
     return;
 
