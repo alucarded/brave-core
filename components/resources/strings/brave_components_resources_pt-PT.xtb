@@ -313,6 +313,7 @@
 <translation id="1979114396925139279">Informação da carteira externa</translation>
 <translation id="5457113250005438886">Inválido</translation>
 <translation id="6161467863097205016">Informação-chave semente:</translation>
+<translation id="5323604113525002127">Mostramos as últimas {{numberOfLines}} linhas do log. Caso pretenda todo o log, pode proceder ao download acima.</translation>
 <translation id="7168491065836975228">Recompensas internas</translation>
 <translation id="758790787422117549">ID da pessoa</translation>
 <translation id="3671566813999349838">Quantia</translation>
@@ -522,6 +523,7 @@
 <translation id="3157931365184549694">Restaurar</translation>
 <translation id="1797334173232638045">Os sites afixados foram movidos para</translation>
 <translation id="6803187280799213426">Os fundos da sua wallet (carteira) Brave são virtuais e não requerem backup. Disponível para gastar exclusivamente neste navegador.</translation>
+<translation id="5904352893156917813">Caso pretenda proteger todos os seus fundos na possibilidade da instalação limpa do navegador ou de mudar para um novo dispositivo, e ter outros benefícios para além de adicionar, retirar e transferir fundos, recomendamos <ph name="LINK_BEGIN"/>verificar sua carteira<ph name="LINK_END"/>.</translation>
 <translation id="5717619667204259673">Guarde a chave de recuperação num local seguro.</translation>
 <translation id="4699702339303280827">Pode utilizar sempre esta chave para recuperar a sua carteira se acontecer algo com o seu navegador ou computador. Mas certifique-se que a protege - qualquer pessoa que obtenha esta chave poderá roubar a sua carteira. É provavelmente mais seguro escrevê-la num pedaço de papel, ou no local onde guarda toda a sua informação importante.</translation>
 <translation id="8979401359137062629">Nota:</translation>
@@ -540,7 +542,9 @@
 <translation id="1640793619390890218">para utilizadores de recompensas de iOS a transferir BAT.</translation>
 <translation id="4600052736217630789">Restaurar com uma chave de recuperação irá substituir a sua carteira atual. Por isso, certifique-se de que esvazia ou efetua uma cópia de segurança da sua carteira antes de restaurar.</translation>
 <translation id="3267911153934785912">Introduza a chave de recuperação ou</translation>
+<translation id="1209382772199769572">Proceda ao backup da sua wallet (carteira) antes de a substituir. Ou perderá os fundos. {{funds}}, na sua wallet (carteira) atual.</translation>
 <translation id="5423214929210538027">Tem a certeza que quer redefinir a sua Rewards Wallet (Carteira de Recompensas)?</translation>
+<translation id="4749947664556704604">Os seus <ph name="BAT_AMOUNT"/> e outros dados de Recompensas perder-se-ão definitivamente caso proceda à redefinição da sua carteira (wallet). Por favor, certifique-se que procedeu à <ph name="LINK_BEGIN"/>verificação da sua carteira<ph name="LINK_END"/> para a manutenção do seu BAT.</translation>
 <translation id="2028613172174411919">Caso opte pela redefinição da sua carteira (wallet), os dados das suas Recompensas perder-se-ão definitivamente.</translation>
 <translation id="4914597931214386232">Doações Token Reivindicadas</translation>
 <translation id="3494964159182650590">Resumo de Recompensas</translation>
@@ -587,7 +591,8 @@
 <translation id="3699674790322420653">Verificação da wallet concluída</translation>
 <translation id="9200453331904391567">Desligar de «Recompensas Brave»</translation>
 <translation id="3656941797339037856">Associar Rewards ao Gemini!</translation>
-<translation id="3066983737886188034">O Gemini permite-lhe negociar, depositar e ganhar 3,49% de APY facilmente no seu BAT. Verifique e associe a sua carteira de Recompensas Brave ao Gemini agora!</translation>
+<translation id="2383784987664887340">O Gemini permite-lhe negociar, depositar e ganhar 3,49% de APY facilmente no seu BAT. Verifique e associe a sua carteira de Recompensas Brave ao Gemini agora!</translation>
+<translation id="2237374144728570574">* APY do Gemini Earn a partir de 15 de setembro de 2021</translation>
 <translation id="7404779623219601861">Resgatar BAT para cartões-presente</translation>
 <translation id="6215565499749144110">Com a TAP Network, pode resgatar os seus BAT por cartões-presente de marcas populares.</translation>
 <translation id="6915065518766963119">* Requer verificação da Uphold</translation>
@@ -1153,9 +1158,4 @@
 <translation id="6973157709854838218">Não mostrar os seus saldos no ecrã</translation>
 <translation id="4548946945059463969">Mostrar os seus saldos no ecrã</translation>
 <translation id="242959166945779492">Não tem saldos na sua conta. Visite FTX para comprar.</translation>
-<translation id="2383784987664887340">O Gemini permite-lhe negociar, depositar e ganhar 3,49% de APY facilmente no seu BAT. Verifique e associe a sua carteira de Recompensas Brave ao Gemini agora!</translation>
-<translation id="2237374144728570574">* APY do Gemini Earn a partir de 15 de setembro de 2021</translation>
-<translation id="3301417531330431881">A carteira de hardware requer confirmação da transação. <ph name="DEVICE_NAME"/></translation>
-<translation id="3327639091470204775">Erro interno. Não é possível criar "iframe bridge"</translation>
-<translation id="1664949222596149258">Comprar por <ph name="PRODUCE_PRICE"/></translation>
 </translationbundle>
