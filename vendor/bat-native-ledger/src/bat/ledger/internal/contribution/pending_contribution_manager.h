@@ -7,7 +7,9 @@
 #define BRAVE_VENDOR_BAT_NATIVE_LEDGER_SRC_BAT_LEDGER_INTERNAL_CONTRIBUTION_PENDING_CONTRIBUTION_MANAGER_H_
 
 #include <string>
+#include <vector>
 
+#include "base/time/time.h"
 #include "bat/ledger/internal/core/bat_ledger_context.h"
 #include "bat/ledger/internal/core/future.h"
 #include "bat/ledger/internal/core/future_cache.h"
@@ -20,6 +22,8 @@ class PendingContributionManager : public BATLedgerContext::Object {
  public:
   static const char kContextKey[];
 
+  static constexpr base::TimeDelta kExpiresAfter = base::Days(90);
+
   PendingContributionManager();
 
   ~PendingContributionManager() override;
@@ -30,9 +34,17 @@ class PendingContributionManager : public BATLedgerContext::Object {
 
   Future<bool> ClearPendingContributions();
 
+  struct AddInfo {
+    PendingContributionType type;
+    std::string publisher_key;
+    double amount;
+  };
+
   Future<bool> AddPendingContribution(PendingContributionType type,
                                       const std::string& publisher_key,
                                       double amount);
+
+  Future<bool> AddPendingContributions(const std::vector<AddInfo>& list);
 
  private:
   FutureCache<bool> process_cache_;

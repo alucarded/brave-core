@@ -197,6 +197,8 @@ source_set("ledger") {
     "src/bat/ledger/internal/core/bat_ledger_context.cc",
     "src/bat/ledger/internal/core/bat_ledger_context.h",
     "src/bat/ledger/internal/core/bat_ledger_job.h",
+    "src/bat/ledger/internal/core/callback_adapter.cc",
+    "src/bat/ledger/internal/core/callback_scope.h",
     "src/bat/ledger/internal/core/delay_generator.cc",
     "src/bat/ledger/internal/core/delay_generator.h",
     "src/bat/ledger/internal/core/future.h",

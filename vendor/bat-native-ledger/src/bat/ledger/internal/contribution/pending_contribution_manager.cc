@@ -19,23 +19,18 @@ namespace ledger {
 
 namespace {
 
-constexpr base::TimeDelta kPendingExpiration = base::Days(90);
-
-// TODO: We need to clean up this table. "viewing_id" is not used. "added_date"
-// should be "created_at". "publisher_id" should be "publisher_key". We should
-// also add the original publisher status (but we don't want to use the old
-// status values). We could probably get rid of the processed_publisher table
-// if we only notify the observer when a publisher transitions from not verified
-// to verified (at all).
+// TODO(zenparsing): We need to clean up this table. "viewing_id" is not used.
+// "added_date" should be "created_at". "publisher_id" should be
+// "publisher_key". We should also add the original publisher status (but we
+// don't want to use the old status values). We could probably get rid of the
+// processed_publisher table if we only notify the observer when a publisher
+// transitions from not verified to verified (at all).
 
 class AddJob : public BATLedgerJob<bool> {
  public:
-  void Start(PendingContributionType type,
-             const std::string& publisher_key,
-             double amount) {
-    if (publisher_key.empty() || amount <= 0)
-      return Complete(false);
+  using AddInfo = PendingContributionManager::AddInfo;
 
+  void Start(const std::vector<AddInfo>& list) {
     static const char kSQL[] = R"sql(
       INSERT OR REPLACE INTO pending_contribution
         (publisher_id, amount, added_date, type)
@@ -43,19 +38,34 @@ class AddJob : public BATLedgerJob<bool> {
     )sql";
 
     double created_at = base::Time::Now().ToDoubleT();
-    int64_t type_id = static_cast<int64_t>(mojom::RewardsType::ONE_TIME_TIP);
+    std::vector<mojom::DBCommandPtr> commands;
 
-    if (type == PendingContributionType::kRecurring)
-      type_id = static_cast<int64_t>(mojom::RewardsType::RECURRING_TIP);
+    for (auto& add_info : list) {
+      if (add_info.publisher_key.empty() || add_info.amount <= 0)
+        return Complete(false);
+
+      int64_t type_id = static_cast<int64_t>(mojom::RewardsType::ONE_TIME_TIP);
+      if (add_info.type == PendingContributionType::kRecurring)
+        type_id = static_cast<int64_t>(mojom::RewardsType::RECURRING_TIP);
+
+      commands.push_back(SQLStore::CreateCommand(
+          kSQL, add_info.publisher_key, add_info.amount, created_at, type_id));
+    }
 
     context()
         .Get<SQLStore>()
-        .Run(kSQL, publisher_key, amount, created_at, type_id)
+        .RunTransaction(std::move(commands))
         .Then(ContinueWith(&AddJob::OnInsertComplete));
   }
 
  private:
-  void OnInsertComplete(SQLReader reader) { Complete(reader.Succeeded()); }
+  void OnInsertComplete(SQLReader reader) {
+    bool success = reader.Succeeded();
+    // TODO(zenparsing): Log if error.
+    context().GetLedgerClient()->PendingContributionSaved(
+        success ? mojom::Result::LEDGER_OK : mojom::Result::LEDGER_ERROR);
+    Complete(success);
+  }
 };
 
 class DeleteJob : public BATLedgerJob<bool> {
@@ -105,7 +115,8 @@ class ProcessJob : public BATLedgerJob<bool> {
       WHERE added_date < ?
     )sql";
 
-    base::Time cutoff = base::Time::Now() - kPendingExpiration;
+    base::Time cutoff =
+        base::Time::Now() - PendingContributionManager::kExpiresAfter;
 
     context()
         .Get<SQLStore>()
@@ -153,9 +164,10 @@ class ProcessJob : public BATLedgerJob<bool> {
   }
 
   void ProcessNext() {
-    // TODO: This "is_testing" business is gross. How should we handle this
-    // instead? Why is it gross? Because we have all of these random is_testing
-    // things sprinkled around ad-hoc. Also, we need to avoid global variables.
+    // TODO(zenparsing): This "is_testing" business is gross. How should we
+    // handle this instead? Why is it gross? Because we have all of these random
+    // is_testing things sprinkled around ad-hoc. Also, we need to avoid global
+    // variables.
     base::TimeDelta delay =
         ledger::is_testing ? base::Seconds(2) : base::Seconds(45);
 
@@ -201,13 +213,13 @@ class ProcessJob : public BATLedgerJob<bool> {
     context().LogInfo(FROM_HERE) << "Processing pending contribution for "
                                  << current_record_.publisher_key;
 
-    // TODO: I suppose that we need to ensure that the user can actually process
-    // the contribution. We'd need to have the user's balance but we'd also need
-    // to know their external wallets and things like that. Another wrinkle is
-    // that while the user's balance may be sufficient for one pending tip it
-    // might not be sufficient for the next one. I believe that the original
-    // design was to basically wait until processing finished for each pending
-    // tip before moving to the next one (hence the delay?).
+    // TODO(zenparsing): I suppose that we need to ensure that the user can
+    // actually process the contribution. We'd need to have the user's balance
+    // but we'd also need to know their external wallets and things like that.
+    // Another wrinkle is that while the user's balance may be sufficient for
+    // one pending tip it might not be sufficient for the next one. I believe
+    // that the original design was to basically wait until processing finished
+    // for each pending tip before moving to the next one (hence the delay?).
 
     std::vector<mojom::ContributionQueuePublisherPtr> queue_publishers;
     auto publisher = mojom::ContributionQueuePublisher::New();
@@ -215,7 +227,8 @@ class ProcessJob : public BATLedgerJob<bool> {
     publisher->amount_percent = 100.0;
     queue_publishers.push_back(std::move(publisher));
 
-    // TODO: This naming is not good. These are queue entries, not queues.
+    // TODO(zenparsing): This naming is not good. These are queue entries, not
+    // queues.
 
     auto queue = mojom::ContributionQueue::New();
     queue->id = base::GenerateGUID();
@@ -224,8 +237,8 @@ class ProcessJob : public BATLedgerJob<bool> {
     queue->partial = false;
     queue->publishers = std::move(queue_publishers);
 
-    // TODO: We shouldn't even need this mojom business - a contribution queue
-    // manager API should allow us to add with "normal" data.
+    // TODO(zenparsing): We shouldn't even need this mojom business - a
+    // contribution queue manager API should allow us to add with "normal" data.
 
     context().GetLedgerImpl()->database()->SaveContributionQueue(
         std::move(queue), CreateLambdaCallback(&ProcessJob::OnQueueSaved));
@@ -245,11 +258,11 @@ class ProcessJob : public BATLedgerJob<bool> {
 
   void OnPendingRecordDeleted(bool success) {
     if (!success) {
-      // TODO: Not sure if we should continue on or not. We can't delete the
-      // queue entry we just added, can we? We need to delete the added
-      // contibution queue item if we are unable to remove the pending record.
-      // Actually, we should probably mark it as inactive first, and then delete
-      // it later.
+      // TODO(zenparsing): Not sure if we should continue on or not. We can't
+      // delete the queue entry we just added, can we? We need to delete the
+      // added contibution queue item if we are unable to remove the pending
+      // record. Actually, we should probably mark it as inactive first, and
+      // then delete it later.
       return Complete(false);
     }
 
@@ -274,9 +287,9 @@ class ProcessJob : public BATLedgerJob<bool> {
     } else if (reader.Step()) {
       uint64_t inserted_rows = reader.ColumnInt64(0);
       if (inserted_rows > 0) {
-        // TODO: This isn't quite right for the external wallet mismatch case.
-        // The publisher could already be verified and *also* still have a
-        // mismatch by the time that we get here.
+        // TODO(zenparsing): This isn't quite right for the external wallet
+        // mismatch case. The publisher could already be verified and *also*
+        // still have a mismatch by the time that we get here.
         context().GetLedgerClient()->OnContributeUnverifiedPublishers(
             mojom::Result::VERIFIED_PUBLISHER, current_record_.publisher_key,
             current_record_.publisher_name);
@@ -316,7 +329,13 @@ Future<bool> PendingContributionManager::AddPendingContribution(
     PendingContributionType type,
     const std::string& publisher_key,
     double amount) {
-  return context().StartJob<AddJob>(type, publisher_key, amount);
+  return AddPendingContributions({AddInfo{
+      .type = type, .publisher_key = publisher_key, .amount = amount}});
+}
+
+Future<bool> PendingContributionManager::AddPendingContributions(
+    const std::vector<AddInfo>& list) {
+  return context().StartJob<AddJob>(list);
 }
 
 }  // namespace ledger

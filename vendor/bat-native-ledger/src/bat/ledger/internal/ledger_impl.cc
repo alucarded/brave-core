@@ -10,6 +10,7 @@
 #include "bat/ledger/internal/common/security_util.h"
 #include "bat/ledger/internal/common/time_util.h"
 #include "bat/ledger/internal/constants.h"
+#include "bat/ledger/internal/contribution/pending_contribution_manager.h"
 #include "bat/ledger/internal/core/bat_ledger_context.h"
 #include "bat/ledger/internal/ledger_impl.h"
 #include "bat/ledger/internal/legacy/media/helper.h"
@@ -713,13 +714,25 @@ void LedgerImpl::GetPendingContributions(
 void LedgerImpl::RemovePendingContribution(uint64_t id,
                                            ResultCallback callback) {
   WhenReady([this, id, callback]() {
-    database()->RemovePendingContribution(id, callback);
+    context()
+        .Get<PendingContributionManager>()
+        .DeletePendingContribution(id)
+        .Then(callback_adapter_([callback](bool success) {
+          callback(CallbackAdapter::ResultCode(success));
+        }));
+    // database()->RemovePendingContribution(id, callback);
   });
 }
 
 void LedgerImpl::RemoveAllPendingContributions(ResultCallback callback) {
   WhenReady([this, callback]() {
-    database()->RemoveAllPendingContributions(callback);
+    context()
+        .Get<PendingContributionManager>()
+        .ClearPendingContributions()
+        .Then(callback_adapter_([callback](bool success) {
+          callback(CallbackAdapter::ResultCode(success));
+        }));
+    // database()->RemoveAllPendingContributions(callback);
   });
 }
 
